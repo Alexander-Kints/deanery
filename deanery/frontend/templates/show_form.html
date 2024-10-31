@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dynamic Feedback Form</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #222;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .form-container {
+      background-color: #333;
+      border: 1px solid #555;
+      padding: 30px;
+      margin: 20px auto;
+      max-width: 500px;
+      border-radius: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-info {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #555;
+      box-sizing: border-box;
+      border-radius: 5px;
+      background-color: #444;
+      color: #fff;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #ddd;
+    }
+
+    button[type="submit"] {
+      background-color: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    .footer {
+      background-color: #333;
+      padding: 10px;
+      text-align: center;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1></h1> <div class="form-info"></div>
+    <form id="feedback-form">
+      <div id="form-fields"></div>
+      <button type="submit">Отправить</button>
+    </form>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const formId = pathParts[pathParts.length - 2];
+
+    fetch(`http://127.0.0.1:8000/form/get/${formId}/`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Ошибка запроса: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(jsonData => {
+        const formFields = document.getElementById('form-fields');
+        const formTitle = document.querySelector('.form-container h1');
+        const formInfo = document.querySelector('.form-info');
+
+        // Сортируем все поля по приоритету
+        const allFields = [...jsonData.short_text_fields, ...jsonData.choices_list_fields];
+        allFields.sort((a, b) => a.priority_on_form - b.priority_on_form);
+
+        // Устанавливаем название формы
+        formTitle.textContent = jsonData.name;
+
+        // Выводим служебную информацию
+        formInfo.innerHTML = `ID: ${jsonData.id}, Сотрудник: ${jsonData.employee}, Время создания: ${jsonData.created_at}`;
+
+        // Создаем поля формы
+        allFields.forEach(field => {
+          const label = document.createElement('label');
+          label.textContent = field.title + (field.is_required ? '*' : '');
+
+          if (field.form_data_type === 1) {
+            const input = document.createElement('input');
+            input.type = "text";
+            input.placeholder = field.title;
+            input.required = field.is_required;
+            formFields.appendChild(label);
+            formFields.appendChild(input);
+          } else if (field.form_data_type === 2) {
+            const select = document.createElement('select');
+            select.required = field.is_required;
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.text = '-';
+            select.appendChild(defaultOption);
+            field.content.forEach(option => {
+              const optionElement = document.createElement('option');
+              optionElement.value = option;
+              optionElement.text = option;
+              select.appendChild(optionElement);
+            });
+            formFields.appendChild(label);
+            formFields.appendChild(select);
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Ошибка при получении данных:', error);
+      });
+  </script>
+</body>
+</html>

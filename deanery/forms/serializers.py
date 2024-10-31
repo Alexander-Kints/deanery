@@ -88,3 +88,9 @@ class FormSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(choices_list_fields_serializer.errors)
 
         return new_form
+
+
+class FormWithoutFieldsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Form
+        fields = '__all__'

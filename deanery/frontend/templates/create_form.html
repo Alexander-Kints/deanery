@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dynamic Form Builder</title>
+    <style>
+      body {
+    font-family: sans-serif;
+    background-color: #222;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  .container {
+    display: flex;
+    margin: 20px auto;
+    max-width: 800px;
+  }
+
+  .sidebar {
+    background-color: #333;
+    border: 1px solid #555;
+    padding: 20px;
+    width: 200px;
+    border-radius: 10px;
+  }
+
+  .sidebar button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #444;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .sidebar button:hover {
+    background-color: #007bff;
+  }
+
+  .form-content {
+    background-color: #333;
+    border: 1px solid #555;
+    padding: 20px;
+    flex: 1;
+    margin-left: 20px;
+    border-radius: 10px;
+  }
+
+  .form-content h2 {
+    margin-bottom: 20px;
+  }
+
+  .form-content input,
+  .form-content select {
+    width: calc(100% - 12px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #555;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background-color: #444;
+    color: #fff;
+  }
+
+  .form-content input:focus,
+  .form-content select:focus {
+    outline: none;
+    border-color: #ddd;
+  }
+
+  .form-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  .form-content .field-options {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .form-content .field-options input[type="checkbox"] {
+    margin-right: 5px;
+  }
+
+  .form-content .field-options label {
+    margin-left: 5px;
+  }
+
+  .form-content .field-options .field-options-content {
+    margin-left: 10px;
+  }
+
+  .form-content .field-options .field-options-content input {
+    width: calc(100% - 12px); /* Сделаем поля ввода короче */
+    margin-bottom: 5px;
+  }
+
+  .form-content .field-options .remove-field {
+    margin-left: 10px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .form-content .field-options .remove-field:hover {
+    background-color: #c82333;
+  }
+
+  .form-content button[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .form-content button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+
+  .footer {
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+    margin-top: auto;
+  }
+
+  /* Стили для выпадающего списка */
+  .form-content .field-options .field-options-content select {
+    width: calc(100% - 12px); /* Сделаем поля ввода короче */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #555;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background-color: #444;
+    color: #fff;
+    appearance: none; /* Скрываем стандартный выпадающий элемент */
+    -webkit-appearance: none; /* Скрываем для Safari */
+    -moz-appearance: none; /* Скрываем для Firefox */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23555' xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z'/></svg>"); /* Добавляем стрелку */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    cursor: pointer;
+  }
+
+  /* Дополнительные стили для скомканного вида */
+  .form-content .field-options {
+    flex-wrap: wrap;
+    justify-content: space-between; /* Распределяем элементы */
+  }
+
+  .form-content .field-options label {
+    margin-right: 5px; /* Уменьшаем отступ слева */
+  }
+
+  .form-content .field-options .field-options-content {
+    margin-left: 0; /* Убираем отступ слева */
+  }
+
+  .form-content .field-options .field-options-content input {
+    margin-bottom: 0; /* Убираем отступ снизу */
+  }
+
+  .form-content .field-options .remove-field {
+    margin-left: 0; /* Убираем отступ слева */
+  }
+
+  .form-content .field-options .remove-field {
+    margin-bottom: 10px; /* Добавляем отступ снизу */
+  }
+
+  /* Модальное окно */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%;
+    border-radius: 10px;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .modal-content p {
+    text-align: center;
+  }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h2>Добавить поле</h2>
+        <button id="add-short-text">Короткий текст</button>
+        <button id="add-choices-list">Выпадающий список</button>
+      </div>
+      <div class="form-content">
+        <form>
+          <h2>Настройки формы</h2>
+          <label for="form-name">Название формы:</label>
+          <input type="text" id="form-name" placeholder="Название формы" />
+          <label for="form-employee">ID сотрудника:</label>
+          <input type="number" id="form-employee" placeholder="ID сотрудника" />
+          <div id="form-fields"></div>
+          <button type="submit">Создать форму</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="myModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p></p>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2024 Ваша компания</p>
+    </footer>
+
+    <script>
+      const formFieldsContainer = document.getElementById("form-fields");
+const addShortTextButton = document.getElementById("add-short-text");
+const addChoicesListButton = document.getElementById("add-choices-list");
+const formNameInput = document.getElementById("form-name");
+const formEmployeeInput = document.getElementById("form-employee");
+const form = document.querySelector("form");
+const modal = document.getElementById("myModal");
+const span = document.getElementsByClassName("close")[0];
+
+let shortTextFields = [];
+let choicesListFields = [];
+
+// Добавление поля "Короткий текст"
+addShortTextButton.addEventListener("click", () => {
+  const fieldOptions = createFieldOptions(1);
+  formFieldsContainer.appendChild(fieldOptions);
+});
+
+// Добавление поля "Выпадающий список"
+addChoicesListButton.addEventListener("click", () => {
+  const fieldOptions = createFieldOptions(2);
+  formFieldsContainer.appendChild(fieldOptions);
+});
+
+// Создание элементов для настроек поля
+function createFieldOptions(formDataType) {
+  const fieldOptions = document.createElement("div");
+  fieldOptions.classList.add("field-options");
+  fieldOptions.dataset.formDataType = formDataType; // Добавляем атрибут данных для form_data_type
+
+  // Название поля
+  const label = document.createElement("label");
+  label.textContent = "Название поля:";
+  fieldOptions.appendChild(label);
+
+  // Поле для ввода названия поля
+  const titleInput = document.createElement("input");
+  titleInput.type = "text";
+  titleInput.placeholder = "Название поля";
+  fieldOptions.appendChild(titleInput);
+
+  // Приоритет поля
+  const priorityLabel = document.createElement("label");
+  priorityLabel.textContent = "Приоритет:";
+  fieldOptions.appendChild(priorityLabel);
+
+  // Поле для ввода приоритета
+  const priorityInput = document.createElement("input");
+  priorityInput.type = "number";
+  priorityInput.placeholder = "Приоритет";
+  fieldOptions.appendChild(priorityInput);
+
+  // Обязательное поле
+  const requiredLabel = document.createElement("label");
+  requiredLabel.textContent = "Обязательное:";
+  fieldOptions.appendChild(requiredLabel);
+
+  // Checkbox для обязательного поля
+  const requiredCheckbox = document.createElement("input");
+  requiredCheckbox.type = "checkbox";
+  fieldOptions.appendChild(requiredCheckbox);
+
+  // Дополнительные опции для "Выпадающий список"
+  if (formDataType === 2) {
+    const contentLabel = document.createElement("label");
+    contentLabel.textContent = "Элементы списка:";
+    fieldOptions.appendChild(contentLabel);
+
+    const contentInput = document.createElement("input");
+    contentInput.type = "text";
+    contentInput.placeholder = "Элементы списка (разделенные запятой)";
+    fieldOptions.appendChild(contentInput);
+  }
+
+  // Кнопка "Удалить поле"
+  const removeButton = document.createElement("button");
+  removeButton.classList.add("remove-field");
+  removeButton.textContent = "Удалить";
+  removeButton.addEventListener("click", () => {
+    fieldOptions.remove();
+  });
+  fieldOptions.appendChild(removeButton);
+
+  return fieldOptions;
+}
+
+// Обработка отправки формы
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const name = formNameInput.value;
+  const employee = formEmployeeInput.value;
+  const shortTextFieldsData = shortTextFields.length > 0 ? shortTextFields : [];
+  const choicesListFieldsData = choicesListFields.length > 0 ? choicesListFields : [];
+
+  /*if (
+    shortTextFieldsData.length === 0 &&
+    choicesListFieldsData.length === 0
+  ) {
+    alert("Нельзя создать пустую форму");
+    console.log(shortTextFieldsData.length, choicesListFieldsData.length)
+    return;
+  }*/
+
+  const formData = {
+    name,
+    employee,
+    short_text_fields: shortTextFieldsData,
+    choices_list_fields: choicesListFieldsData,
+  };
+
+  fetch("http://127.0.0.1:8000/form/create/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  })
+    .then((response) => {
+
+      console.log(response);
+      if (!response.ok) {
+        throw new Error(`Ошибка отправки: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log("We're here");
+      if (data.message === "created") {
+        // Отображаем модальное окно
+        modal.style.display = "block";
+        modal.querySelector(
+          "p"
+        ).textContent = `Форма успешно создана. ID: ${data.id}`;
+      } else {
+        console.error("Неожиданный ответ от сервера:", data);
+      }
+    })
+    .catch((error) => {
+      console.error("Ошибка при отправке формы:", error);
+    });
+});
+
+// Обработка изменений в форме
+formFieldsContainer.addEventListener("input", (event) => {
+  if (event.target.classList.contains("field-options")) {
+    const fieldOptions = event.target;
+    const title = fieldOptions.querySelector('input[type="text"]').value;
+    const priority = parseInt(
+      fieldOptions.querySelector('input[type="number"]').value
+    );
+    const isRequired = fieldOptions.querySelector(
+      'input[type="checkbox"]'
+    ).checked;
+    const contentInput = fieldOptions.querySelector(
+      'input[type="text"][placeholder="Элементы списка (разделенные запятой)"]'
+    );
+    const content = contentInput
+      ? contentInput.value
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item !== "")
+      : []; // Получаем элементы списка
+
+    if (fieldOptions.querySelector('input[type="number"]').value === "") {
+      // Если приоритет не введен, не сохраняем поле
+      return;
+    }
+
+    const fieldData = {
+      title,
+      priority,
+      is_required: isRequired,
+      form_data_type: parseInt(fieldOptions.dataset.formDataType), // Получаем form_data_type из атрибута данных
+      content,
+    };
+
+    if (fieldData.form_data_type === 1) {
+      shortTextFields = shortTextFields.filter(
+        (field) => field.priority !== fieldData.priority
+      ); // Удаляем существующие поля с таким приоритетом
+      shortTextFields.push(fieldData);
+      console.log(shortTextFields);
+    } else if (fieldData.form_data_type === 2) {
+      choicesListFields = choicesListFields.filter(
+        (field) => field.priority !== fieldData.priority
+      ); // Удаляем существующие поля с таким приоритетом
+      choicesListFields.push(fieldData);
+      console.log(shortTextFields);
+    }
+
+    shortTextFields.sort((a, b) => a.priority - b.priority); // Сортируем shortTextFields
+    choicesListFields.sort((a, b) => a.priority - b.priority); // Сортируем choicesListFields
+  }
+});
+
+// Закрытие модального окна
+span.onclick = function () {
+  modal.style.display = "none";
+};
+
+// Закрытие модального окна при клике вне него
+window.onclick = function (event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+};
+    </script>
+  </body>
+</html>

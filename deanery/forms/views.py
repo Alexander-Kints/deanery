@@ -1,7 +1,8 @@
 from rest_framework import views
 from rest_framework import response
 from django.db.models import ObjectDoesNotExist
-from .serializers import FormSerializer
+from rest_framework.generics import ListAPIView
+from .serializers import FormSerializer, FormWithoutFieldsSerializer
 from .models import ShortTextField, ChoicesListField
 from .models import Form
 
@@ -37,3 +38,7 @@ class FormGetAPIView(views.APIView):
         model_serializer.is_valid(raise_exception=True)
         return response.Response(model_serializer.data)
 
+
+class FormListAPIView(ListAPIView):
+    queryset = Form.objects.all()
+    serializer_class = FormWithoutFieldsSerializer
