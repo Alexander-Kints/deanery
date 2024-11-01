@@ -1,92 +1,133 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Список форм</title>
+  <title>Список форм</title>
   <style>
     body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-}
+      font-family: sans-serif;
+      background-color: #222;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
 
-.container {
-    max-width: 600px;
-    margin: auto;
-}
+    .container {
+      background-color: #333;
+      border: 1px solid #555;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 500px;
+      border-radius: 10px;
+    }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-ul {
-    list-style-type: none;
-    padding: 0;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
 
-li {
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    margin: 10px 0;
-    padding: 15px;
-    transition: background-color 0.3s;
-}
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #555;
+    }
 
-li:hover {
-    background-color: #333;
-}
+    th {
+      background-color: #444;
+      font-weight: bold;
+    }
 
-a {
-    text-decoration: none;
-    color: #ffffff;
-    display: block;
-}
+    td a {
+      color: #fff;
+      text-decoration: none;
+    }
 
+    td a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      background-color: #333;
+      padding: 10px;
+      text-align: center;
+      margin-top: auto;
+    }
   </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Список форм</h1>
-        <ul id="form-list"></ul>
-    </div>
+  <div class="container">
+    <h2>Список форм</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Создано</th>
+          <th>Сотрудник</th>
+        </tr>
+      </thead>
+      <tbody id="form-list"></tbody>
+    </table>
+  </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-    const apiUrl = 'http://127.0.0.1:8000/form/list/';
-    const formList = document.getElementById('form-list');
+  <footer class="footer">
+    <p>&copy; Разработка</p>
+  </footer>
 
-    fetch(apiUrl)
-        .then(response => {
-            // Логируем ответ для диагностики
-            console.log('Ответ от сервера:', response);
+  <script>
+    fetch('http://127.0.0.1:8000/form/list/')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Ошибка запроса: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(formList => {
+        const formListContainer = document.getElementById('form-list');
+        formList.forEach(form => {
+          const row = document.createElement('tr');
+          const idCell = document.createElement('td');
+          const nameCell = document.createElement('td');
+          const createdAtCell = document.createElement('td');
+          const employeeCell = document.createElement('td');
 
-            if (!response.ok) {
-                throw new Error('Сеть ответила с ошибкой: ' + response.status);
-            }
+          const formUrl = `http://127.0.0.1:8000/front/${form.id}/`;
+          const nameLink = document.createElement('a');
+          nameLink.href = formUrl;
+          nameLink.textContent = form.name;
 
-            return response.json(); // Здесь может произойти ошибка
-        })
-        .then(data => {
-            data.forEach(item => {
-                const listItem = document.createElement('li');
-                const link = document.createElement('a');
+          idCell.textContent = form.id;
+          nameCell.appendChild(nameLink);
 
-                link.href = `http://127.0.0.1:8000/front/${item.id}/`;
-                link.textContent = `${item.name} (Создано: ${new Date(item.created_at).toLocaleString()})`;
+          // Преобразование даты и времени
+          const createdAt = new Date(form.created_at);
+          const formattedCreatedAt = createdAt.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric'
+          });
+          createdAtCell.textContent = formattedCreatedAt;
 
-                listItem.appendChild(link);
-                formList.appendChild(listItem);
-            });
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
+          employeeCell.textContent = form.employee;
+
+          row.appendChild(idCell);
+          row.appendChild(nameCell);
+          row.appendChild(createdAtCell);
+          row.appendChild(employeeCell);
+          formListContainer.appendChild(row);
         });
-});
-
-    </script>
+      })
+      .catch(error => {
+        console.error('Ошибка при получении данных:', error);
+      });
+  </script>
 </body>
 </html>

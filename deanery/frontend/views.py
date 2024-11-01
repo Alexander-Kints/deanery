@@ -8,4 +8,4 @@ def create_form(request):
     return render(request, template_name='create_form.html')
 
 def form_list(request):
-    return render(request, template_name='index.html')
+    return render(request, template_name='list.html')

@@ -40,7 +40,9 @@
     }
 
     input[type="text"],
-    select {
+    textarea,
+    select,
+    input[type="number"] {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
@@ -49,10 +51,13 @@
       border-radius: 5px;
       background-color: #444;
       color: #fff;
+      resize: vertical;
     }
 
     input[type="text"]:focus,
-    select:focus {
+    textarea:focus,
+    select:focus,
+    input[type="number"]:focus {
       outline: none;
       border-color: #ddd;
     }
@@ -77,22 +82,116 @@
       text-align: center;
       margin-top: auto;
     }
+
+    /* Стили для разных типов полей ввода */
+    .short-text,
+    .email-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #555;
+      box-sizing: border-box;
+      border-radius: 5px;
+      background-color: #444;
+      color: #fff;
+      resize: vertical;
+    }
+
+    .short-text:focus,
+    .email-input:focus {
+      outline: none;
+      border-color: #ddd;
+    }
+
+    .long-text {
+      max-length: 512; /* Ограничение для длинного текста */
+    }
+
+    /* Стили для разных типов списков */
+    .choices-list-type-1 {
+      /* Выпадающий список */
+    }
+
+    .choices-list-type-2 {
+      /* Список option button */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .choices-list-type-2 input[type="radio"] {
+      margin-right: 5px;
+    }
+
+    .choices-list-type-2 label {
+      display: block;
+    }
+
+    .choices-list-type-3 {
+      /* Список с множественным выбором */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .choices-list-type-3 input[type="checkbox"] {
+      margin-right: 5px;
+    }
+
+    .choices-list-type-3 label {
+      display: block;
+    }
+
+    /* Разделительная линия между полями */
+    .form-field-separator {
+      border-top: 1px solid #555;
+      margin-bottom: 15px;
+    }
+
+    /* Поле для ввода "Студент" */
+    .form-content .student-input {
+      margin-bottom: 15px;
+    }
+
+    .form-content .student-input label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    /* Разделительная линия под полем "Студент" */
+    .form-content .student-input + .form-field-separator {
+      margin-bottom: 15px;
+    }
+
+    /* Разделительная линия после последнего элемента формы */
+    #form-fields > *:last-child + .form-field-separator {
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="form-container">
-    <h1></h1> <div class="form-info"></div>
-    <form id="feedback-form">
-      <div id="form-fields"></div>
-      <button type="submit">Отправить</button>
-    </form>
+    <h1></h1>
+    <div class="form-info"></div>
+    <div class="form-content">
+      <div class="student-input">
+        <label for="form-student">Студент:</label>
+        <input type="number" id="form-student" placeholder="Студент">
+      </div>
+      <div class="form-field-separator"></div> <form id="feedback-form">
+        <div id="form-fields"></div>
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
   </div>
+
+  <footer class="footer">
+    <p>&copy; 2024 Ваша компания</p>
+  </footer>
 
   <script>
     const pathParts = window.location.pathname.split('/');
     const formId = pathParts[pathParts.length - 2];
-
-    fetch(`http://127.0.0.1:8000/form/get/${formId}/`)
+    fetch('http://127.0.0.1:8000/form/get/' + formId + '/')
       .then(response => {
         if (!response.ok) {
           throw new Error(`Ошибка запроса: ${response.status}`);
@@ -104,45 +203,108 @@
         const formTitle = document.querySelector('.form-container h1');
         const formInfo = document.querySelector('.form-info');
 
-        // Сортируем все поля по приоритету
-        const allFields = [...jsonData.short_text_fields, ...jsonData.choices_list_fields];
-        allFields.sort((a, b) => a.priority_on_form - b.priority_on_form);
-
         // Устанавливаем название формы
         formTitle.textContent = jsonData.name;
 
         // Выводим служебную информацию
-        formInfo.innerHTML = `ID: ${jsonData.id}, Сотрудник: ${jsonData.employee}, Время создания: ${jsonData.created_at}`;
+        const createdAt = new Date(jsonData.created_at);
+        const formattedCreatedAt = createdAt.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric'
+          });
+        formInfo.innerHTML = `ID: ${jsonData.id}, Сотрудник: ${jsonData.employee}, Время создания: ${formattedCreatedAt}`;
 
-        // Создаем поля формы
-        allFields.forEach(field => {
-          const label = document.createElement('label');
-          label.textContent = field.title + (field.is_required ? '*' : '');
+        // Отрисовываем поля формы
+        if (jsonData.text_fields) {
+          jsonData.text_fields.forEach((field, index) => {
+            if (index > 0) {
+              const separator = document.createElement('div');
+              separator.classList.add('form-field-separator');
+              formFields.appendChild(separator);
+            }
 
-          if (field.form_data_type === 1) {
-            const input = document.createElement('input');
-            input.type = "text";
-            input.placeholder = field.title;
+            const label = document.createElement('label');
+            label.textContent = field.title + (field.is_required ? '*' : '');
+
+            let input;
+            if (field.text_field_type === 1) {
+              input = document.createElement('input');
+              input.classList.add('short-text');
+            } else if (field.text_field_type === 2) {
+              input = document.createElement('textarea');
+              input.classList.add('long-text');
+            } else if (field.text_field_type === 3) {
+              input = document.createElement('input');
+              input.classList.add('email-input');
+            }
             input.required = field.is_required;
             formFields.appendChild(label);
             formFields.appendChild(input);
-          } else if (field.form_data_type === 2) {
-            const select = document.createElement('select');
-            select.required = field.is_required;
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.text = '-';
-            select.appendChild(defaultOption);
-            field.content.forEach(option => {
-              const optionElement = document.createElement('option');
-              optionElement.value = option;
-              optionElement.text = option;
-              select.appendChild(optionElement);
-            });
+          });
+        }
+
+        if (jsonData.choices_list_fields) {
+          jsonData.choices_list_fields.forEach((field, index) => {
+            if (index > 0 || jsonData.text_fields) { // Добавляем разделитель, если есть предыдущее поле
+              const separator = document.createElement('div');
+              separator.classList.add('form-field-separator');
+              formFields.appendChild(separator);
+            }
+
+            const label = document.createElement('label');
+            label.textContent = field.title + (field.is_required ? '*' : '');
+            const choicesContainer = document.createElement('div');
+            choicesContainer.classList.add('choices-list-type-' + field.choices_list_field_type);
+            choicesContainer.required = field.is_required;
+
+            if (field.choices_list_field_type === 1) {
+              const select = document.createElement('select');
+              const defaultOption = document.createElement('option');
+              defaultOption.value = '';
+              defaultOption.text = '-';
+              select.appendChild(defaultOption);
+              field.content.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.text = option;
+                select.appendChild(optionElement);
+              });
+              choicesContainer.appendChild(select);
+            } else if (field.choices_list_field_type === 2) {
+              field.content.forEach((option, index) => {
+                const radioInput = document.createElement('input');
+                radioInput.type = 'radio';
+                radioInput.name = 'choice-' + field.id;
+                radioInput.value = option;
+                const radioLabel = document.createElement('label');
+                radioLabel.textContent = option;
+                choicesContainer.appendChild(radioInput);
+                choicesContainer.appendChild(radioLabel);
+              });
+            } else if (field.choices_list_field_type === 3) {
+              field.content.forEach((option, index) => {
+                const checkboxInput = document.createElement('input');
+                checkboxInput.type = 'checkbox';
+                checkboxInput.value = option;
+                const checkboxLabel = document.createElement('label');
+                checkboxLabel.textContent = option;
+                choicesContainer.appendChild(checkboxInput);
+                choicesContainer.appendChild(checkboxLabel);
+              });
+            }
+
             formFields.appendChild(label);
-            formFields.appendChild(select);
-          }
-        });
+            formFields.appendChild(choicesContainer);
+          });
+        }
+
+        // Добавляем разделительную черту после последнего элемента формы
+        const separator = document.createElement('div');
+        separator.classList.add('form-field-separator');
+        formFields.appendChild(separator);
       })
       .catch(error => {
         console.error('Ошибка при получении данных:', error);

@@ -2,20 +2,21 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 
-class Employee(models.Model):
+class BaseUserProperties(models.Model):
     name = models.CharField(max_length=255)
     patronymic = models.CharField(max_length=255)
     surname = models.CharField(max_length=255)
 
     class Meta:
+        abstract = True
+
+
+class Employee(BaseUserProperties):
+    class Meta:
         db_table = 'employee'
 
 
-class Student(models.Model):
-    name = models.CharField(max_length=255)
-    patronymic = models.CharField(max_length=255)
-    surname = models.CharField(max_length=255)
-
+class Student(BaseUserProperties):
     class Meta:
         db_table = 'student'
 
@@ -55,24 +56,41 @@ class BaseResponseProperties(models.Model):
         abstract = True
 
 
-class ShortTextField(BaseFieldProperties):
+class TextField(BaseFieldProperties):
+    text_field_type = models.ForeignKey('TextFieldType', on_delete=models.PROTECT)
+
     class Meta:
-        db_table = 'short_text_field'
+        db_table = 'text_field'
 
 
-class ShortTextFieldResponse(BaseResponseProperties):
+class TextFieldType(models.Model):
+    name = models.CharField(max_length=127)
+
+    class Meta:
+        db_table = 'text_field_type'
+
+
+class TextFieldResponse(BaseResponseProperties):
     response = models.CharField(max_length=255)
-    short_text_field = models.ForeignKey('ShortTextField', on_delete=models.PROTECT)
+    text_field = models.ForeignKey('TextField', on_delete=models.PROTECT)
 
     class Meta:
-        db_table = 'short_text_field_response'
+        db_table = 'text_field_response'
 
 
 class ChoicesListField(BaseFieldProperties):
-    content = ArrayField(models.CharField(max_length=127))
+    content = ArrayField(models.CharField(max_length=255))
+    choices_list_field_type = models.ForeignKey('ChoicesListFieldType', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'choices_list_field'
+
+
+class ChoicesListFieldType(models.Model):
+    name = models.CharField(max_length=127)
+
+    class Meta:
+        db_table = 'choices_list_field_type'
 
 
 class ChoicesListFieldResponse(BaseResponseProperties):
