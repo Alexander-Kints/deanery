@@ -16,26 +16,7 @@ class FormCreateAPIView(views.APIView):
 
 class FormGetAPIView(views.APIView):
     def get(self, request, form_id):
-        try:
-            form = Form.objects.get(pk=form_id)
-            form_data = {
-                **form.__dict__,
-                "employee": form.employee.pk,
-            }
-        except ObjectDoesNotExist:
-            return response.Response({"error": "object does not exist"}, status=404)
-        text_fields = TextField.objects.filter(form_id=form_id).select_related()
-        choices_list_fields = ChoicesListField.objects.filter(form_id=form_id).select_related()
-        if text_fields.exists():
-            form_data['text_fields'] = [
-                {**field.__dict__, "form_data_type": field.form_data_type.pk,
-                 "text_field_type": field.text_field_type.pk} for field in text_fields
-            ]
-        if choices_list_fields.exists():
-            form_data['choices_list_fields'] = [
-                {**field.__dict__, "form_data_type": field.form_data_type.pk,
-                 "choices_list_field_type": field.choices_list_field_type.pk} for field in choices_list_fields
-            ]
+        form_data = FormSerializer.get_form_data_by_pk(form_id)
         model_serializer = FormSerializer(data=form_data)
         model_serializer.is_valid(raise_exception=True)
         return response.Response(model_serializer.data)
